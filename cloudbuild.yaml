@@ -1,0 +1,91 @@
+# cloudbuild.yaml
+
+
+steps:
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: Copy Resources
+  entrypoint: /bin/sh
+  args:
+  - '-c'
+  - |
+    gcloud config set project ${PROJECT_ID} && \
+    gsutil -m cp -r dataproc/jobs/*.py gs://${PROJECT_ID}-datalake/resources/dataproc/ && \
+    gsutil -m cp -r tests/*.py gs://${PROJECT_ID}-datalake/resources/tests/ && \
+    gsutil -m cp -r schemas/*.sql gs://${PROJECT_ID}-datalake/resources/bigquery/
+    gsutil -m cp -r *.jar gs://${PROJECT_ID}-datalake/resources/
+
+    gsutil -m cp -r data_quality_tests/* gs://${PROJECT_ID}-datalake/resources/data_quality_tests
+
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: Create schemas
+  entrypoint: /bin/sh
+  args:
+  - '-c'
+  - |
+    echo "Project: ${PROJECT_ID}" && \
+    gcloud config set project ${PROJECT_ID} && \
+    for sql_file in $(gsutil ls gs://${PROJECT_ID}-datalake/resources/bigquery/*.sql); do \
+      echo "Processing $sql_file" && \
+      gsutil cat $sql_file | bq query --project_id=${PROJECT_ID} --use_legacy_sql=false; \
+    done
+
+
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: Create or Update dataproc ephemeral workflow 
+  entrypoint: /bin/bash
+  args:
+  - '-c'
+  - |
+    set -e  # Exit on any error
+    gcloud config set project ${PROJECT_ID}
+    
+    # Check if the workflow template already exists and update it if necessary
+    if gcloud dataproc workflow-templates describe process_pyspark_dwh --region=us-east4 &> /dev/null; then
+      echo "Workflow template already exists. Updating..."
+      gcloud dataproc workflow-templates delete process_pyspark_dwh --region=us-east4 --quiet
+    fi
+
+    echo "Creating new workflow template..."
+    gcloud dataproc workflow-templates create process_pyspark_dwh --region=us-east4
+
+    # Import the job configuration from the specified YAML
+    echo "Importing job configuration from YAML..."
+    gcloud dataproc workflow-templates import process_pyspark_dwh \
+      --source=dataproc/templates/job_pyspark.yaml --region=us-east4
+
+    # Set up the managed cluster (ephemeral) configuration
+    echo "Setting up managed cluster configuration..."
+    gcloud dataproc workflow-templates set-managed-cluster process_pyspark_dwh \
+    --cluster-name=process-pyspark-test \
+    --single-node \
+    --region=us-east4 \
+    --image-version=2.0-debian10 \
+    --properties="dataproc:dataproc.sql.bigquery.connector.driver.version=2.12:2.2.5" \
+    --initialization-actions="gs://goog-dataproc-initialization-actions-us-east4/connectors/connectors.sh" \
+    --metadata="bigquery-connector-version=1.2.0" \
+    --temp-bucket=${PROJECT_ID}-datalake
+
+    echo "Instantiating workflow template..."
+    gcloud dataproc workflow-templates instantiate process_pyspark_dwh \
+    --region=us-east4 \
+    --parameters PROCESS_DATE=2024-10-08
+    #,PROJECT_ID=${PROJECT_ID}
+
+
+- name: 'python:3.10'
+  id: Data Quality Validation
+  entrypoint: /bin/bash
+  args:
+  - '-c'
+  - |
+    set -e
+    
+    
+    # Install dependencies from requirements.txt
+    pip install -r data_quality_tests/requirements.txt
+    
+    # Run the Python script
+    python data_quality_tests/run_validations.py data_quality_tests/multiple_datasets_prueba.yml
+
+options:
+  logging: CLOUD_LOGGING_ONLY

@@ -1,0 +1,17 @@
+ipython
+great_expectations
+pandas
+jupyter
+openpyxl
+ndjson
+panel
+sqlalchemy
+pyodbc
+psycopg2
+mysqlclient
+pymysql
+google-cloud-bigquery
+sqlalchemy-bigquery
+gcsfs
+google-cloud-bigquery-storage
+google-cloud-storage

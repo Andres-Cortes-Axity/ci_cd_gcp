@@ -1,0 +1,39 @@
+
+
+jobs:
+- pysparkJob:
+    args:
+      - process_date
+    jarFileUris:
+      - gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.32.2.jar
+    mainPythonFileUri: gs://gcp-arquitecture-space-datalake/resources/dataproc/01_ingest_currency.py
+    pythonFileUris:
+      - gs://gcp-arquitecture-space-datalake/resources/dataproc/utils.py
+    properties:
+      'spark.sql.execution.arrow.pyspark.enabled': 'true'
+  stepId: step_process_currency
+
+parameters:
+- name: PROCESS_DATE
+  fields:
+  - jobs['step_process_currency'].pysparkJob.args[0]
+#jobs:
+#- pysparkJob:
+#    args:
+#      - "{{PROCESS_DATE}}"
+#    jarFileUris:
+#      - gs://gcp-arquitecture-space-datalake/resources/spark-bigquery-with-dependencies_2.12-0.30.0.jar
+#    mainPythonFileUri: gs://gcp-arquitecture-space-datalake/resources/dataproc/01_ingest_currency.py
+#    pythonFileUris:
+#      - gs://gcp-arquitecture-space-datalake/resources/dataproc/utils.py
+#  stepId: step_process_currency
+#
+#parameters:
+#  - name: PROCESS_DATE
+#    fields:
+#      - jobs['step_process_currency'].pysparkJob.args[0]
+  #- name: PROJECT_ID
+  #  fields:
+  #    - jobs['step_process_currency'].pysparkJob.jarFileUris[0]
+   #   - jobs['step_process_currency'].pysparkJob.mainPythonFileUri
+   #   - jobs['step_process_currency'].pysparkJob.pythonFileUris[0]

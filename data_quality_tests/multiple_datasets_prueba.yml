@@ -1,0 +1,100 @@
+
+# For more configuration options see the configuration guide for Greate Expectations
+# https://greatexpectations.io/expectations/
+
+#----------------------- GLOBAL CONFIGURATION -----------------------
+
+#This secctions contains information about the general configuration of your data quality project, all the datasets configured to be tested in this file
+# will be part of the same project, stage and path_logs
+
+#----------------------------------------------------------------------------
+global:
+  project: "proyecto_demo"
+  sub_project: "subproyecto"
+  stage: "consumo" #it is intended for extraction or consumption stages
+  path_logs: "./logs_prueba_multiprocess"
+  parallelize: False #True #True or False
+  method: #"ProcessPoolExecutor" #"ThreadPoolExecutor" #if parallelize is set to true you can sellect between ProcessPoolExecutor and ThreadPoolExecutor
+
+
+#----------------------- DATA SOURCES-----------------------
+# You can select between one of the sources db, file or cloud storage, it's important to mention that in case of 
+# choose a cloud storage you must consider the security configurations concerning to the selected cloud
+
+data_sources :  #db, file, bigquery,cloud_storage
+  bigquery_source:
+    type: "bigquery"
+    # This configurations must be set up if you have choosed bigquery as your source
+    credentials:
+      bigquery_gcp_project_id: "gcp-arquitecture-space"
+      bigquery_credentials_path: "data_quality_tests/credentials/gcp-arquitecture-space-3ee49e71a5ce.json"
+      schema: "raw_sales"
+    datasets:
+      - table_name: "tb_currency"
+        expectations_suite: "tb_currency_validation_suite"
+
+
+
+    
+  gcp_cloud_storage_source:
+    type: "gcp_cloud_storage"
+    credentials:
+      # This configurations must be set up if you have choosed google_cloud_storage as your source
+      storage_gcp_project: "gcp-arquitecture-space"
+      storage_credentials_path: "data_quality_tests/credentials/gcp-arquitecture-space-b10c45e51b1a.json"
+    datasets: 
+      - name: "set_de_prueba"
+        path: "gcp-arquitecture-space-datalake/data/set_de_prueba.csv"
+        expectations_suite: "set_de_prueba_validation_suite"
+
+
+
+    #  - name: "file2"
+    #    path: "path/to/file2" 
+    #    expectations_suite: "file2_validation_suite"
+
+#----------------------------------------------------------------------------
+
+expectation_suites:
+  tb_currency_validation_suite:
+    description: "Validation suite for tb_currency table"
+    expectations:
+      missingness_expectations:
+        ExpectColumnValuesToBeNull:
+          - [fecha, 1]
+
+      cardinality_expectations:
+        ExpectColumnValuesToBeUnique:
+          - [fecha]
+      
+      schema:
+        ExpectColumnToExist:
+          - compra
+          - venta
+        ExpectColumnValuesToBeOfType:
+          - [compra, FLOAT]
+        ExpectTableColumnCountToEqual:
+          - 10
+
+      volume:
+        ExpectTableRowCountToEqual: [10]  
+      
+
+          
+  set_de_prueba_validation_suite:
+      description: "Validation suite for set de prueba file en gcp"
+      expectations:
+        data_integrity: 
+          ExpectColumnPairValuesToBeEqual: 
+            - [fare_amount,total_amount,0]
+          ExpectMulticolumnSumToEqual: 
+            - [[vendor_id, passenger_count],2,0.33] 
+
+
+        missingness_expectations: 
+          ExpectColumnValuesToBeNull: 
+          - [rate_code_id,1]
+          - [store_and_fwd_flag,0.1]
+          ExpectColumnValuesToNotBeNull: 
+            - [vendor_id,1]
+            - [total_amount,1]
