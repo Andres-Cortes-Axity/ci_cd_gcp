@@ -15,6 +15,9 @@ steps:
     gsutil -m cp -r *.jar gs://${PROJECT_ID}-datalake/resources/
 
     gsutil -m cp -r data_quality_tests/* gs://${PROJECT_ID}-datalake/resources/data_quality_tests
+    gsutil -m cp -r data_quality_tests/*.py gs://${PROJECT_ID}-datalake/resources/data_quality_tests
+    gsutil -m cp -r data_quality_tests/*.yml gs://${PROJECT_ID}-datalake/resources/data_quality_tests
+    gsutil -m cp -r data_quality_tests/*.txt gs://${PROJECT_ID}-datalake/resources/data_quality_tests
 
 - name: 'gcr.io/cloud-builders/gcloud'
   id: Create schemas

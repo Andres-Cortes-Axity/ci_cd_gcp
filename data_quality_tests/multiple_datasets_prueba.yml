@@ -27,7 +27,7 @@ data_sources :  #db, file, bigquery,cloud_storage
     # This configurations must be set up if you have choosed bigquery as your source
     credentials:
       bigquery_gcp_project_id: "gcp-arquitecture-space"
-      bigquery_credentials_path: "data_quality_tests/credentials/gcp-arquitecture-space-3ee49e71a5ce.json"
+      bigquery_credentials_path: "data_quality_tests/credentials/gcp-arquitecture-space-a97454ba5070.json"
       schema: "raw_sales"
     datasets:
       - table_name: "tb_currency"
@@ -41,7 +41,7 @@ data_sources :  #db, file, bigquery,cloud_storage
     credentials:
       # This configurations must be set up if you have choosed google_cloud_storage as your source
       storage_gcp_project: "gcp-arquitecture-space"
-      storage_credentials_path: "data_quality_tests/credentials/gcp-arquitecture-space-b10c45e51b1a.json"
+      storage_credentials_path: "data_quality_tests/credentials/gcp-arquitecture-space-6bbb3d8797c2.json"
     datasets: 
       - name: "set_de_prueba"
         path: "gcp-arquitecture-space-datalake/data/set_de_prueba.csv"
